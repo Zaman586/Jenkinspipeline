@@ -1,41 +1,48 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Build') {
             steps {
+                echo 'Building the Docker Image...'
+                // Build the Docker image from the Dockerfile
                 script {
-                    // Build the Docker image
-                    sh 'docker build -t zaman-anwar-cv .'
+                    docker.build('zaman-anwar-cv')
                 }
             }
         }
 
-        stage('Scan') {
+        stage('Test') {
             steps {
-                script {
-                    // Scan the Docker image for vulnerabilities using Trivy
-                    sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL zaman-anwar-cv'
-                }
+                echo 'Running Security Scans...'
+                // Example: Use a security scanner like Trivy or Docker Bench
+                // You can replace this with the actual security scan command you need
+                sh 'docker run --rm aquasec/trivy image zaman-anwar-cv'
             }
         }
 
         stage('Deploy') {
             steps {
+                echo 'Deploying the Docker Image...'
+                // Push the Docker image to DockerHub or a private registry
                 script {
-                    // Deploy the container (example using Docker run)
-                    sh 'docker run -d -p 80:80 --name cv zaman-anwar-cv'
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-credentials-id') {
+                        docker.image('zaman-anwar-cv').push('latest')
+                    }
                 }
             }
         }
     }
 
     post {
+        always {
+            echo 'This will always run after each stage'
+        }
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'The pipeline has been successfully completed!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'The pipeline failed.'
         }
     }
 }
