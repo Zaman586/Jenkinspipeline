@@ -1,33 +1,37 @@
 pipeline {
-    agent any
-    
+    agent any 
+
+    environment {
+        DOCKER_IMAGE = 'zamananwar/my-nginx-app:latest' // Change this to your Docker image
+        REGISTRY_CREDENTIALS = 'docker-hub-credentials' // Jenkins credentials ID for Docker Hub
+    }
+
     stages {
         stage('Build') {
             steps {
-                echo 'Building the Docker Image...'
-                // Build the Docker image from the Dockerfile
                 script {
-                    docker.build('zaman-anwar-cv')
+                    // Build Docker image
+                    docker.build(DOCKER_IMAGE)
                 }
             }
         }
 
-        stage('Test') {
+        stage('Scan') {
             steps {
-                echo 'Running Security Scans...'
-                // Example: Use a security scanner like Trivy or Docker Bench
-                // You can replace this with the actual security scan command you need
-                sh 'docker run --rm aquasec/trivy image zaman-anwar-cv'
+                script {
+                    // Run a Docker scan (using Docker scan CLI)
+                    sh "docker scan ${DOCKER_IMAGE}"
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying the Docker Image...'
-                // Push the Docker image to DockerHub or a private registry
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-credentials-id') {
-                        docker.image('zaman-anwar-cv').push('latest')
+                    // Login to Docker Hub
+                    docker.withRegistry('https://index.docker.io/v1/', REGISTRY_CREDENTIALS) {
+                        // Push the image to Docker Hub
+                        sh "docker push ${DOCKER_IMAGE}"
                     }
                 }
             }
@@ -35,14 +39,11 @@ pipeline {
     }
 
     post {
-        always {
-            echo 'This will always run after each stage'
-        }
         success {
-            echo 'The pipeline has been successfully completed!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'The pipeline failed.'
+            echo 'Pipeline failed!'
         }
     }
 }
