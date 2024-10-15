@@ -10,11 +10,17 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Ensure we're in the right directory
-                    sh 'pwd'  // Prints the current directory to verify
+                    // Navigate to the correct directory
+                    dir('/home/zamanpc/Jenkinspipeline') {
+                        // Print the current directory to verify
+                        sh 'pwd'
+                        
+                        // Check if Dockerfile exists in the current directory
+                        sh 'ls -l'
 
-                    // Build Docker image from the current directory
-                    docker.build(DOCKER_IMAGE, '.')
+                        // Build Docker image from the current directory
+                        docker.build(DOCKER_IMAGE, '.')
+                    }
                 }
             }
         }
